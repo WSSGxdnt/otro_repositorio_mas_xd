@@ -12,7 +12,7 @@ candado = asyncio.Lock()
 
 
 async def _cargar_sin_bloqueo():
-    """Funcion interna para leer el archivo."""
+    """Funcion interna para leer el archivo aiosdioasdoias."""
 
     if not RUTA_ARCHIVO.exists():
         return {"productos": []}
@@ -28,7 +28,7 @@ async def _cargar_sin_bloqueo():
 
 
 async def _guardar_sin_bloqueo(inventario):
-    """Funcion interna para guardar el archivo."""
+    """Funcion interna para guardar el archivo o algo asi xd. añfkdñlfkañlkf"""
 
     contenido = json.dumps(
         inventario,
@@ -52,7 +52,7 @@ async def cargar_inventario():
 
 
 async def obtener_producto(codigo):
-    """Busca un producto por su codigo."""
+    """Busca un producto por su codigo. 0-0 """
 
     async with candado:
         inventario = await _cargar_sin_bloqueo()
@@ -68,10 +68,10 @@ async def crear_producto(codigo, nombre, precio, stock):
     """Registra un producto nuevo."""
 
     if not codigo.strip() or not nombre.strip():
-        raise ValueError("El codigo y el nombre son obligatorios.")
+        raise ValueError("El codigo y el nombre son obligatorios !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
 
     if precio < 0 or stock < 0:
-        raise ValueError("El precio y el stock no pueden ser negativos.")
+        raise ValueError("El precio y el stock no pueden ser negativos!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
 
     async with candado:
         inventario = await _cargar_sin_bloqueo()
@@ -97,10 +97,10 @@ async def crear_producto(codigo, nombre, precio, stock):
 
 
 async def vender_producto(codigo, cantidad):
-    """Realiza una venta y comprueba que haya stock suficiente."""
+    """Realiza una venta y comprueba que haya stock suficiente xd"""
 
     if cantidad <= 0:
-        raise ValueError("La cantidad debe ser mayor que cero.")
+        raise ValueError("La cantidad debe ser mayor que cero")
 
     async with candado:
         inventario = await _cargar_sin_bloqueo()

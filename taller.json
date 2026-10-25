@@ -1,0 +1,9 @@
+[
+    {
+        "placa": "ABC123",
+        "modelo": "2024",
+        "falla_reportada": "No enciende",
+        "estado": "En diagnóstico",
+        "costo_reparacion": 0
+    }
+]

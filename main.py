@@ -1,153 +1,54 @@
+from fastapi import FastAPI, HTTPException
+from database import leer_base_datos, guardar_base_datos, db_lock
+from schemas import OrdenCreate, OrdenUpdate
 
-import asyncio
-from fastapi import FastAPI
-
-from database import cargar_inventario,crear_producto, vender_producto
-
-resultados_prueba = []
-
-
-async def preparar_inventario():
-    """Prepara los productos para la prueba de estres. rkejgiuehwgi"""
-
-    productos_prueba = [
-        ("P001", "Teclado mecanico", 120000, 10),
-        ("P002", "Mouse gamer", 65000, 5),
-        ("P003", "Monitor sospechoso", 450000, 4),
-        ("P004", "Audifonos de combate", 90000, 8)
-    ]
-
-    inventario = await cargar_inventario()
-
-    if inventario["productos"]:
-        return
-
-    for codigo, nombre, precio, stock in productos_prueba:
-        await crear_producto(codigo, nombre, precio, stock)
-
-
-async def venta_segura(codigo, cantidad, descripcion):
-    """Ejecuta una venta y captura sus errores. ajhfiughaiuosegh"""
-
-    try:
-        producto = await vender_producto(codigo, cantidad)
-
-        mensaje = (
-            f"{descripcion}: venta exitosa de {cantidad} unidades xd"
-            f"de {producto['nombre']}. "
-            f"Stock restante: {producto['stock']}."
-        )
-
-        print(mensaje)
-
-        # Aviso de stock bajo.
-        if producto["stock"] <= 2:
-            aviso = (
-                f"ALERTA: quedan solamente {producto['stock']} "
-                f"unidades de {producto['nombre']}."
-            )
-
-            print(aviso)
-
-            resultados_prueba.append({
-                "tipo": "alerta_stock",
-                "mensaje": aviso
-            })
-
-        resultado = {
-            "tipo": "venta_exitosa",
-            "mensaje": mensaje,
-            "producto": producto
-        }
-
-        resultados_prueba.append(resultado)
-        return resultado
-
-    except ValueError as error:
-        mensaje = f"{descripcion}: venta rechazada. {error}"
-        print(mensaje)
-
-        resultado = {
-            "tipo": "error",
-            "mensaje": mensaje
-        }
-
-        resultados_prueba.append(resultado)
-        return resultado
-
-    except Exception as error:
-        mensaje = f"{descripcion}: error inesperado. {error}"
-        print(mensaje)
-
-        resultado = {
-            "tipo": "error_inesperado",
-            "mensaje": mensaje
-        }
-
-        resultados_prueba.append(resultado)
-        return resultado
-
-
-async def ejecutar_prueba():
-    """Simula cuatro ventas concurrentes."""
-
-    await preparar_inventario()
-
-    resultados_prueba.clear()
-
-    print("\n===== INICIO DE LA PRUEBA o no se xd =====")
-
-    await asyncio.gather(
-        # Caso 1: venta normal.
-        venta_segura("P001", 3, "Venta 1"),
-
-        # Caso 2: deja el stock en 2 y activa la alerta.
-        venta_segura("P002", 3, "Venta 2"),
-
-        # Caso 3: intenta vender mas unidades de las disponibles.
-        venta_segura("P003", 10, "Venta 3"),
-
-        # Caso 4: otra venta normal.
-        venta_segura("P004", 2, "Venta 4")
-    )
-
-    print("===== FIN DE LA PRUEBA xd =====\n")
-
-
-
-app = FastAPI(
-    title="Proyecto Inventario",
-    description="API de inventario y prueba.... :D",
+apiRest = FastAPI(
+    title="API Taller de Motos SENA",
+    description="Módulo de recepción y seguimiento de motocicletas",
     version="1.0.0"
 )
 
+@apiRest.post("/ordenes", status_code=201)
+async def crear_orden(orden: OrdenCreate):
+    async with db_lock:
+        datos = await leer_base_datos()
 
-@app.on_event("startup")
-async def iniciar_aplicacion():
-    await ejecutar_prueba()
+        for dato in datos:
+            if dato["placa"] == orden.placa and dato["estado"] != "Entregada":
+                raise HTTPException(status_code=400, detail="La moto ya se encuentra en el taller")
 
+        nueva_orden = orden.model_dump()
+        nueva_orden["estado"] = "En diagnóstico"
+        nueva_orden["costo_reparacion"] = 0
 
-@app.get("/")
-async def inicio():
-    return {
-        "mensaje": "Inventario iniciado correctamente.",
-        "documentacion": "/docs",
-        "rutas_disponibles": [
-            "/",
-            "/inventario",
-            "/resultados"
-        ]
-    }
+        datos.append(nueva_orden)
+        await guardar_base_datos(datos)
 
+    return nueva_orden
 
-@app.get("/inventario")
-async def consultar_inventario():
-    return await cargar_inventario()
+@apiRest.get("/ordenes")
+async def listar_ordenes():
+    return await leer_base_datos()
 
+@apiRest.put("/ordenes/{placa}")
+async def actualizar_orden(placa: str, cambios: OrdenUpdate):
+    async with db_lock:
+        datos = await leer_base_datos()
+        posicion = None
+        for i in range(len(datos) - 1, -1, -1):
+            if datos[i]["placa"] == placa:
+                posicion = i
+                break
+        if posicion is None:
+            raise HTTPException(status_code=404, detail="No existe una orden con esa placa")
+        if cambios.nuevo_estado == "Reparada" and cambios.costo_reparacion <= 0:
+            raise HTTPException(
+                status_code=400,
+                detail="No se puede marcar como reparada sin asignar un costo de reparación"
+            )
 
-@app.get("/resultados")
-async def consultar_resultados():
-    return {
-        "total_resultados": len(resultados_prueba),
-        "resultados": resultados_prueba
-    }
+        datos[posicion]["estado"] = cambios.nuevo_estado
+        datos[posicion]["costo_reparacion"] = cambios.costo_reparacion
+        await guardar_base_datos(datos)
+
+        return datos[posicion]

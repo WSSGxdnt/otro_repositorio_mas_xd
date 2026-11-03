@@ -94,3 +94,17 @@ def actualizar_orden(placa: str, datos: OrdenUpdate):
     orden["costo_reparacion"] = datos.costo_reparacion
     guardar_ordenes(ordenes)
     return orden
+
+
+@router.delete("/{placa}")
+def eliminar_orden(placa: str):
+    ordenes = leer_ordenes()
+
+    # Se elimina la orden más recientemente registrada con esa placa.
+    for i in range(len(ordenes) - 1, -1, -1):
+        if ordenes[i]["placa"] == placa:
+            eliminada = ordenes.pop(i)
+            guardar_ordenes(ordenes)
+            return {"mensaje": "Orden eliminada", "orden": eliminada}
+
+    raise HTTPException(status_code=404, detail="Placa no encontrada")

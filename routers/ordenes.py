@@ -1,8 +1,8 @@
 import json
 from pathlib import Path
-from typing import List
+from typing import List, Optional
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel, Field
 
 router = APIRouter(prefix="/ordenes", tags=["Órdenes de servicio"])
@@ -68,8 +68,27 @@ def crear_orden(orden: OrdenCreate):
 
 
 @router.get("/", response_model=List[OrdenOut])
-def consultar_ordenes():
-    return leer_ordenes()
+def consultar_ordenes(
+    estado: Optional[str] = Query(None, description="Filtrar por estado exacto"),
+    modelo: Optional[str] = Query(None, description="Filtrar por modelo exacto"),
+    costo_minimo: Optional[float] = Query(
+        None, ge=0, description="Costo de reparación mínimo (>=)"
+    ),
+):
+    resultado = leer_ordenes()
+
+    # Filtros acumulativos: cada filtro enviado reduce aún más la lista,
+    # así que todos los que lleguen se cumplen a la vez (lógica AND).
+    if estado is not None:
+        resultado = [o for o in resultado if o["estado"].lower() == estado.lower()]
+
+    if modelo is not None:
+        resultado = [o for o in resultado if o["modelo"].lower() == modelo.lower()]
+
+    if costo_minimo is not None:
+        resultado = [o for o in resultado if o["costo_reparacion"] >= costo_minimo]
+
+    return resultado
 
 
 @router.put("/{placa}", response_model=OrdenOut)

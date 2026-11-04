@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 [
     {
         "placa": "AAA111",
@@ -20,4 +21,14 @@
         "estado": "Reparada",
         "costo_reparacion": 80000.0
     }
+=======
+[
+    {
+        "placa": "ABC123",
+        "modelo": "2024",
+        "falla_reportada": "No enciende",
+        "estado": "En diagnóstico",
+        "costo_reparacion": 0
+    }
+>>>>>>> 32b1fa1b3c43f5f52fdee2b2425a6f319832707e
 ]

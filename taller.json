@@ -1,1 +1,23 @@
-[]
+[
+    {
+        "placa": "AAA111",
+        "modelo": "Bajaj",
+        "falla_reportada": "No enciende",
+        "estado": "Reparada",
+        "costo_reparacion": 150000.0
+    },
+    {
+        "placa": "BBB222",
+        "modelo": "Yamaha",
+        "falla_reportada": "Frenos desgastados",
+        "estado": "En diagnóstico",
+        "costo_reparacion": 0
+    },
+    {
+        "placa": "CCC333",
+        "modelo": "Bajaj",
+        "falla_reportada": "Ruido en el motor",
+        "estado": "Reparada",
+        "costo_reparacion": 80000.0
+    }
+]

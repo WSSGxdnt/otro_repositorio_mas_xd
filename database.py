@@ -1,22 +1,13 @@
-import json
-import asyncio
-from pathlib import Path
- 
-import aiofiles
- 
-ARCHIVO_BD = Path(__file__).parent / "taller.json"
-db_lock = asyncio.Lock()
- 
- 
-async def leer_base_datos():
-    try:
-        async with aiofiles.open(ARCHIVO_BD, mode="r", encoding="utf-8") as f:
-            contenido = await f.read()
-            return json.loads(contenido) if contenido.strip() else []
-    except FileNotFoundError:
-        return []
- 
- 
-async def guardar_base_datos(datos):
-    async with aiofiles.open(ARCHIVO_BD, mode="w", encoding="utf-8") as f:
-        await f.write(json.dumps(datos, indent=4, ensure_ascii=False))
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.orm import declarative_base
+
+DATABASE_URL = "sqlite+aiosqlite:///./taller.db"
+
+engine = create_async_engine(DATABASE_URL, echo=False)
+SessionLocal = async_sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
+
+Base = declarative_base()
+
+async def obtener_bd():
+    async with SessionLocal() as session:
+        yield session

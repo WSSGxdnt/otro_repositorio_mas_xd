@@ -1,14 +1,28 @@
+from typing import Optional
+
 from pydantic import BaseModel, Field
 
-
-class OrdenCreate(BaseModel):
-    """Datos que envía el cliente al registrar una moto en el taller."""
-    placa: str = Field(..., min_length=1, max_length=6, description="Placa de la moto (máximo 6 caracteres)")
-    modelo: str = Field(..., min_length=1, description="Modelo de la moto")
-    falla_reportada: str = Field(..., min_length=1, description="Falla reportada por el cliente")
+class MecanicoCreate(BaseModel):
+    documento: str = Field(..., min_length=1, max_length=15)
+    nombre_completo: str = Field(..., min_length=1, max_length=100)
+    especialidad: Optional[str] = Field(default=None, max_length=50)
 
 
-class OrdenUpdate(BaseModel):
-    """Datos que envía el cliente al actualizar diagnóstico y facturación."""
-    nuevo_estado: str = Field(..., min_length=1, description="Nuevo estado de la orden")
-    costo_reparacion: float = Field(..., description="Costo correspondiente a la reparación")
+class MecanicoResponse(MecanicoCreate):
+    id: int
+    activo: bool
+
+    model_config = {"from_attributes": True}
+
+
+class RepuestoCreate(BaseModel):
+    codigo_sku: str = Field(..., min_length=1, max_length=20)
+    nombre: str = Field(..., min_length=1, max_length=100)
+    precio_compra: float = Field(..., ge=0)
+    precio_venta: float = Field(..., ge=0)
+    stock_actual: int = Field(default=0, ge=0)
+
+
+class RepuestoResponse(RepuestoCreate):
+    id: int
+    model_config = {"from_attributes": True}
